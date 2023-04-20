@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 
 class CacheUtils {
 
-  static final Logger log = Logger("CacheHelper");
+  static final Logger log = Logger("CacheUtils");
 
   static Future<File> set(String key, String value) {
     return getCacheFile(key).then((file) async {
