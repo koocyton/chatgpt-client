@@ -5,18 +5,18 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "aichat",
+            "name": "doopp-chat",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "aichat (profile mode)",
+            "name": "doopp-chat (profile mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "aichat (release mode)",
+            "name": "doopp-chat (release mode)",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

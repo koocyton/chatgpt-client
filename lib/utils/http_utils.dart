@@ -1,21 +1,17 @@
-import 'package:devicelocale/devicelocale.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/src/response.dart' as dr;
 import 'package:flutter/material.dart';
-import 'package:aichat/utils/cache_utils.dart';
+import 'package:dooppchat/utils/cache_utils.dart';
 import 'package:logging/logging.dart';
-import 'package:get/get.dart';
-import 'package:path_provider/path_provider.dart';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' as f;
-import 'package:crypto/crypto.dart';
+import 'package:crypto/crypto.dart' as c;
+import 'package:path_provider/path_provider.dart';
 
 class HttpUtils {
 
-  // static final HttpClient client = HttpClient();
   static Logger log = Logger("HttpUtils");
 
-  static final Future<String?> currentLocaleFuture = Devicelocale.currentLocale;
+  // static final Future<String?> currentLocaleFuture = Devicelocale.currentLocale;
 
   static final Map<String, String> accountInfoMap = {
     "account" : "",
@@ -24,20 +20,26 @@ class HttpUtils {
 
   static final Map<String, String> defaultHeaderMap = {
     'Accept':'text/html,application/json,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-    'Accept-Encoding':'gzip, deflate, br',
-    'Accept-Language': Get.locale==null ? "tw" : Get.locale!.toLanguageTag(),
+    // 'Accept-Encoding':'gzip, deflate, br',
+    // 'Accept-Language': "Http:AcceptLanguage".tr,
     'Cache-Control':'max-age=0',
-    'Connection':'keep-alive',
-    'sec-ch-ua':'".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-    'sec-ch-ua-mobile':'?0',
-    'sec-ch-ua-platform':'"Windows"',
-    'Sec-Fetch-Dest':'document',
-    'Sec-Fetch-Mode':'navigate',
-    'Sec-Fetch-Site':'none',
-    'Sec-Fetch-User':'?1',
-    'Upgrade-Insecure-Requests':'1',
-    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+    // 'Connection':'keep-alive',
+    // 'sec-ch-ua':'".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
+    // 'sec-ch-ua-mobile':'?0',
+    // 'sec-ch-ua-platform':'"Windows"',
+    // 'Sec-Fetch-Dest':'document',
+    // 'Sec-Fetch-Mode':'navigate',
+    // 'Sec-Fetch-Site':'none',
+    // 'Sec-Fetch-User':'?1',
+    // 'Upgrade-Insecure-Requests':'1',
+    // 'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
   };
+
+  static String md5(String str) {
+    return c.md5.convert(
+      Utf8Encoder().convert(str)
+    ).toString();
+  }
 
   static Dio? _dioInstance;
 
@@ -45,17 +47,17 @@ class HttpUtils {
     if (_dioInstance == null) {
       _dioInstance = Dio()..interceptors.add(InterceptorsWrapper(
           onRequest: (options, handler) {
-            // debugPrint(" >>> onRequest url : ${options.uri}");
-            // debugPrint(" >>> onRequest header : ${options.headers}");
+            //debugPrint(" >>> onRequest url : ${options.uri}");
+            //debugPrint(" >>> onRequest header : ${options.headers}");
             return handler.next(options);
           }, 
           onResponse: (response, handler) {
-            // debugPrint(" >>> onResponse : ${response.statusCode}");
+            //debugPrint(" >>> onResponse : ${response.statusCode}");
             handler.next(response);
           }, 
           onError: (DioError e, handler) {
-            debugPrint(" >>> onError response statusCode : ${e.response!.statusCode}");
-            debugPrint(" >>> onError response data : ${e.response!.data}");
+            //debugPrint(" >>> onError response statusCode : ${e.response!.statusCode}");
+            //debugPrint(" >>> onError response data : ${e.response!.data}");
             return handler.next(e);
           })
         );
@@ -108,6 +110,7 @@ class HttpUtils {
       });
     }
     on Exception catch(e) {
+      log.info(e);
       return Future.value(null);
     }
   }
@@ -115,7 +118,7 @@ class HttpUtils {
   static Future<String?> stringGet(String url, {String? cacheKey, int? cacheDuration, Map<String, String>? headerMap}) async {
     String? str;
     if (cacheKey!=null) {
-      str = await CacheUtils.get(md5Str(cacheKey), expireMinutes: cacheDuration);
+      str = await CacheUtils.get(cacheKey, expireMinutes: cacheDuration);
       if (str!=null) {
         return str;
       }
@@ -130,12 +133,13 @@ class HttpUtils {
       .then((response){
         str = response.toString();
         if (cacheKey!=null && str!=null) {
-          CacheUtils.set(md5Str(cacheKey), str!);
+          CacheUtils.set(cacheKey, str!);
         }
         return str;
       });
     }
     on Exception catch(e) {
+      log.info(e);
       return Future.value(null);
     }
   }
@@ -155,11 +159,15 @@ class HttpUtils {
       });
     }
     on Exception catch(e) {
+      log.info(e);
       return Future.value(null);
     }
   }
 
-  static Future<String?> stringPost(String url, {String? cacheKey, int? cacheDuration, Map<String, String>? headerMap, Map<String, dynamic>? postData}) async {
+  static Future<String?> stringPost(String url, {String? cacheKey, int? cacheDuration, Map<String, String>? headerMap, dynamic postData}) async {
+    if (cacheKey!=null) {
+      cacheKey = md5(cacheKey);
+    }
     String? str;
     if (cacheKey!=null) {
       str = await CacheUtils.get(cacheKey, expireMinutes: cacheDuration);
@@ -182,6 +190,8 @@ class HttpUtils {
       });
     }
     on Exception catch(e) {
+      log.info(e);
+      debugPrint(e.toString());
       return Future.value(null);
     }
   }
@@ -210,6 +220,7 @@ class HttpUtils {
       });
     }
     on Exception catch(e) {
+      log.info(e);
       return Future.value(null);
     }
   }
@@ -222,11 +233,9 @@ class HttpUtils {
         headers[key] = moreHeaders[key]!;
       }
     }
+    // for(String key in headers.keys) {
+    //   log.info("$key : ${headers[key]}");
+    // }
     return headers;
-  }
-
-  static String md5Str(String str) {
-    f.Uint8List content = const Utf8Encoder().convert("S44DF#Q ^Y123DF $str");
-    return md5.convert(content).toString();
   }
 }

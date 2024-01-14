@@ -22,7 +22,7 @@ class CacheUtils {
   static Future<List<String>> getDirFiles(String path) {
     return getApplicationDocumentsDirectory()
       .then((appDir) {
-        return Directory("${appDir.path}/.cache/$path");
+        return Directory("${appDir.path}/aiCache/$path");
       })
       .then((dir) {
         if (dir.existsSync()) {
@@ -65,7 +65,7 @@ class CacheUtils {
   static Future<int> clearCacheFile(String key) {
     return getApplicationDocumentsDirectory()
     .then((appDir) {
-      File f = File("${appDir.path}/.cache/$key");
+      File f = File("${appDir.path}/aiCache/$key");
       return f.exists().then((isExists){
         if (isExists) {
           try {
@@ -84,7 +84,7 @@ class CacheUtils {
   static Future<File> getCacheFile(String key) {
     return getApplicationDocumentsDirectory()
       .then((appDir) {
-        return File("${appDir.path}/.cache/$key");
+        return File("${appDir.path}/aiCache/$key");
       })
       .then((file) {
         if (!file.parent.existsSync()) {

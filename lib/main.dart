@@ -1,40 +1,41 @@
 import 'dart:ui';
 
-import 'package:aichat/routes.dart';
+import 'package:dooppchat/service/db_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:dooppchat/config/routes.dart';
+import 'package:dooppchat/locale/translations.dart';
+import 'package:dooppchat/widget/easy.dart';
+import 'package:dooppchat/widget/spin_kit.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:logging/logging.dart';
 import 'package:get/get.dart';
 
-const Color BaseColor = Color(0xFFEEEEEE);
-final MediaQueryData windowMediaQueryData = MediaQueryData.fromWindow(window);
-final double topHeight = windowMediaQueryData.padding.top;
-final double windowWidth = windowMediaQueryData.size.width;
-final double windowHeight = windowMediaQueryData.size.height;
-const double headHeight = 54.00;
+MediaQueryData get windowMediaQueryData => MediaQueryData.fromView(window);
+double get appTopHeight => windowMediaQueryData.padding.top;
+double get appWidth     => windowMediaQueryData.size.width;
+double get appHeight    => windowMediaQueryData.size.height;
+Color  get appBgColor   => Color(0xFF222222);
+Color  get appFgColor   => Colors.amber;
 
 void main() {
-
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     debugPrint('${record.level.name} [${record.time.toString().substring(0, 19)}] ${record.message}');
   });
-
   WidgetsFlutterBinding.ensureInitialized();
   Wakelock.enable();
   Future.delayed(const Duration(milliseconds: 200), () {
     runApp(const App());
   });
   SystemChrome.restoreSystemUIOverlays();
-  // 强制竖屏
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown
   ]);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    systemNavigationBarColor: BaseColor,
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    systemNavigationBarColor: appBgColor,
     systemNavigationBarDividerColor: Colors.transparent,
     statusBarColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
@@ -51,6 +52,8 @@ class App extends StatefulWidget {
 
 class AppState extends State<App> with SingleTickerProviderStateMixin {
 
+  bool mainScreenLocked = true;
+
   @override
   Widget build(BuildContext context) {
     FocusScope.of(context).requestFocus(FocusNode());
@@ -59,16 +62,26 @@ class AppState extends State<App> with SingleTickerProviderStateMixin {
       localeResolutionCallback: (deviceLocale, supportedLocales) {
         return;
       },
-      initialRoute: "/chatPage",
       getPages: Routes.getPages,
-      // title: '',
-      color: BaseColor,
-      // home: ,
-      home: Container(),
+      color: appBgColor,
+      home: Container(
+        height: appTopHeight, 
+        color: appBgColor,
+        alignment: Alignment.center,
+        child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children:[
+              SpinKit.cubeGrid(size: 80, color:appFgColor),
+              SizedBox(height:5),
+              Easy.twoColorText(text1: "doopp", text2: "chat", color1: appFgColor)
+            ]
+          )
+      ),
       locale: Get.deviceLocale,
+      translations: TranslationService(),
       theme: ThemeData(brightness: Brightness.light),
       builder: (BuildContext context, Widget? child) {
-        // LoginHelper.initSession();
         EasyLoading.instance
             ..displayDuration = const Duration(milliseconds: 2000)
             ..indicatorType = EasyLoadingIndicatorType.fadingCircle
@@ -77,12 +90,22 @@ class AppState extends State<App> with SingleTickerProviderStateMixin {
             ..radius = 5.0
             ..toastPosition = EasyLoadingToastPosition.bottom
             ..contentPadding = const EdgeInsets.fromLTRB(10, 10, 10, 10)
-            ..backgroundColor = BaseColor
+            ..backgroundColor = appBgColor
             ..indicatorColor = Colors.white
             ..textColor = Colors.white
             ..maskColor = Colors.white;
           return EasyLoading.init().call(context, child);
       },
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    DBService.initDababase().then((v){
+      Future.delayed(Duration(milliseconds: 2000), (){
+        Get.offNamed("/chat");
+      });
+    });
   }
 }
